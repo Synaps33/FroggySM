@@ -1,0 +1,32 @@
+# Build artifacts
+*.o
+*.a
+*.so
+*.so.*
+*_libretro*.a
+runner/test_runner
+dist/
+
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Screenshots dumped by the headless runner
+*.ppm
+*.png
+
+# Local song libraries
+Songs/
+/pspm-songs/
+
+# Editor / OS noise
+.vscode/
+.idea/
+*.swp
+*~
+.DS_Store
+
+# Secrets
+github.txt
+*.pem
+*.key
