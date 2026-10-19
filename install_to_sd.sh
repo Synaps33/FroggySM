@@ -10,15 +10,18 @@ OLD_APP="PSPMania"    # poprzednia nazwa, do posprzatania
 OLD_APP2="FroggySM"   # wariant z wielkimi literami, tez do posprzatania
 LOW_APP="pspmania"    # vfat rozroznie wielkosc liter
 
-SD_ROOT=""
+SD_ROOT="${SD_ROOT:-}"
 
-# Wykrywanie katalogu karty SD konsoli (GB300 / SF2000)
-for p in /media/Sajnaps/GB300 /media/Sajnaps/* /mnt/* /media/*; do
-    if [ -d "$p/system/Deimos/cores" ] || [ -d "$p/cores" ]; then
-        SD_ROOT="$p"
-        break
-    fi
-done
+# Wykrywanie katalogu karty SD konsoli (GB300 / SF2000).
+# SD_ROOT mozna podac z srodowiska, zeby przetestowac instalacje na atrapie.
+if [ -z "$SD_ROOT" ]; then
+    for p in /media/Sajnaps/GB300 /media/Sajnaps/* /mnt/* /media/*; do
+        if [ -d "$p/system/Deimos/cores" ] || [ -d "$p/cores" ]; then
+            SD_ROOT="$p"
+            break
+        fi
+    done
+fi
 
 if [ -z "$SD_ROOT" ]; then
     echo "Karta SD nie zostala wykryta. Podlacz karte do komputera i sprobuj ponownie."
@@ -94,7 +97,8 @@ rm -fv "$SD_ROOT/ROMS/$BIN.gba" \
        "$SD_ROOT/ROMS/pspmania;$OLD_APP.gba" \
        "$SD_ROOT/ROMS/gba/$BIN.gba" \
        "$SD_ROOT/ROMS/gba/$LOW_APP.gba" \
-       "$ROMS_DIR/$BIN.gba" 2>/dev/null || true
+       "$ROMS_DIR/$BIN.gba" \
+       "$SD_ROOT/ROMS/$BIN;$OLD_APP2.gba" 2>/dev/null || true
 rm -rf "$SD_ROOT/ROMS/$OLD_APP" "$SD_ROOT/ROMS/$LOW_APP" "$SD_ROOT/ROMS/$OLD_APP2" 2>/dev/null || true
 
 # 4. Kopiuj okladke
@@ -118,18 +122,22 @@ rm -fv "$ROMS_DIR/$OLD_APP" \
 # 6. Piosenki
 SONGS_DIR="$ROMS_DIR/Songs"
 if [ -d "$SONGS_SRC" ]; then
-    echo "Kopiowanie piosenek..."
+    # -n: nie nadpisuj istniejacych plikow. Powtarzane instalacje wgrywaly
+    # ~6 MB nadpisujac cala biblioteke za kazdym razem, co na karcie FAT
+    # tluczlo istniejace pliki i raz po razie zostawialo uszkodzony katalog
+    # Songs. Nowe pliki sa dodawane, istniejace nietkniete.
+    echo "Kopiowanie nowych piosenek (bez nadpisywania)..."
     mkdir -p "$SONGS_DIR"
-    cp -r "$SONGS_SRC"/* "$SONGS_DIR/"
+    cp -rn "$SONGS_SRC"/* "$SONGS_DIR/" 2>/dev/null || true
 fi
 
 # 7. Motywy StepManii
 THEMES_SRC="/home/Sajnaps/stepmania-sf2000/Themes"
 THEMES_DIR="$ROMS_DIR/Themes"
 if [ -d "$THEMES_SRC" ]; then
-    echo "Kopiowanie motywow..."
+    echo "Kopiowanie motywow (bez nadpisywania)..."
     mkdir -p "$THEMES_DIR"
-    cp -r "$THEMES_SRC"/* "$THEMES_DIR/"
+    cp -rn "$THEMES_SRC"/* "$THEMES_DIR/" 2>/dev/null || true
 fi
 
 sync
