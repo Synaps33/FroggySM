@@ -34,8 +34,10 @@ microSD card.
 ### 1. Copy the core
 
 Download **`froggysm.sf2k`** from the
-[releases page](https://github.com/Synaps33/FroggySM/releases). One binary runs
-on both consoles.
+[releases page](https://github.com/Synaps33/FroggySM/releases). The published
+binary targets the GB300V2 firmware. An SF2000 console needs a separate build
+(`FROGGY_TYPE=SF2000`): the game code is identical, but the BIOS syscall
+addresses differ, so the two payloads are not interchangeable.
 
 ```bash
 cp froggysm.sf2k /media/<CARD>/system/Deimos/cores/froggysm.sf2k
@@ -74,7 +76,7 @@ The third field **must contain a dot** — the extension is stripped, and a bare
 filename makes the parse fail, leaving you with a `STOCK` screen.
 
 ```bash
-printf 'froggysm;froggysm;froggysm.gba' > '/media/<CARD>/ROMS/froggysm;FroggySM.gba'
+printf 'froggysm;froggysm;froggysm.gba' > '/media/<CARD>/ROMS/froggysm;froggysm.gba'
 sync
 ```
 
@@ -88,7 +90,7 @@ Boot the console, open the file browser and start **FroggySM**.
 Two symptoms of a misconfigured install:
 
 - **`STOCK` screen** — the stub in step 3 was rejected. Check it with
-  `cat '/media/<CARD>/ROMS/froggysm;FroggySM.gba'`; it must print
+  `cat '/media/<CARD>/ROMS/froggysm;froggysm.gba'`; it must print
   `froggysm;froggysm;froggysm.gba`.
 - **Nothing happens at all** — the core lookup missed. Verify that the folder
   and the core file are spelled identically:
@@ -186,9 +188,15 @@ make device \
     SONGS_PATH=/path/to/Songs
 ```
 
-If you need the payload linked for the other firmware revision, pass
-`FROGGY_TYPE=GB300V2` — the game code is identical either way, only the BIOS
-syscall addresses and the LCD register value differ.
+Pass `FROGGY_TYPE=GB300V2` for the GB300V2 firmware; the default is
+`SF2000`. The game code is identical either way, only the BIOS syscall
+addresses and the LCD register value differ, so a payload built for one
+firmware will not start on the other.
+
+Boot diagnostics can be enabled by creating an empty
+`bios/enable_xlog.txt` on the card. The core then writes
+`froggysm_diag.log` (scan roots, screen transitions, image loads) in the card
+root. With the flag absent the core writes nothing.
 
 ### Install to SD
 
