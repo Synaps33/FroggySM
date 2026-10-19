@@ -25,10 +25,9 @@ static int s_log_count;
  * /mnt/sda1 (see include/file.h in the multicore tree).  The PSPMania paths
  * are kept as fallbacks so a card laid out for the old name still works. */
 static const char *const s_default_roots[] = {
+    "/mnt/sda1/ROMS/froggysm/Songs",
     "/mnt/sda1/ROMS/FroggySM/Songs",
-    "/mnt/sda1/FroggySM/Songs",
     "/mnt/sda1/ROMS/PSPMania/Songs",
-    "/mnt/sda1/PSPMania/Songs",
     "/mnt/sda1/Songs",
     NULL
 };

@@ -347,11 +347,11 @@ void sm_theme_init(void)
 
     /* Try to load official graphics / metrics from Themes/default */
     const char *default_dirs[] = {
+        "/mnt/sda1/ROMS/froggysm/Themes/default",
         "/mnt/sda1/ROMS/FroggySM/Themes/default",
         "/mnt/sda1/Themes/default",
-        "/ROMS/FroggySM/Themes/default",
         "/mnt/sda1/ROMS/PSPMania/Themes/default",
-        "/media/Sajnaps/GB300/ROMS/FroggySM/Themes/default",
+        "/media/Sajnaps/GB300/ROMS/froggysm/Themes/default",
         "/home/Sajnaps/stepmania-sf2000/Themes/default",
         "Themes/default",
         NULL

@@ -1,9 +1,13 @@
 #!/usr/bin/env bash
 set -e
 
-APP="FroggySM"        # nazwa katalogu ROM i wpisu w menu
+# APP musi byc identyczne jak BIN: menu wyprowadza nazwe rdzenia z nazwy
+# folderu ROM i szuka cores/<APP>.sf2k. Roznica tylko w wielkosci liter
+# wystarczy, zeby szukanie pliku koncze sie bledem.
+APP="froggysm"        # nazwa katalogu ROM
 BIN="froggysm"        # nazwa pliku rdzenia (bez rozszerzenia)
 OLD_APP="PSPMania"    # poprzednia nazwa, do posprzatania
+OLD_APP2="FroggySM"   # wariant z wielkimi literami, tez do posprzatania
 LOW_APP="pspmania"    # vfat rozroznie wielkosc liter
 
 SD_ROOT=""
@@ -34,12 +38,11 @@ if [ ! -f "$CORE" ]; then
     exit 1
 fi
 
+# Jedyna lokalizacja, ktorej firmware szuka: CORES_DIRECTORY/<id>.sf2k
+# (include/file.h + src/main.c). Katalog cores/<id>/ z core_87000000
+# uzywany przez oryginalny loader, ale nie przez ten front-end.
 mkdir -p "$SD_ROOT/system/Deimos/cores"
 cp -vf "$CORE" "$SD_ROOT/system/Deimos/cores/$BIN.sf2k"
-
-mkdir -p "$SD_ROOT/cores/$BIN"
-cp -vf "$CORE" "$SD_ROOT/cores/$BIN/core_87000000"
-cp -vf "$CORE" "$SD_ROOT/cores/$BIN/$BIN.sf2k"
 
 # 2. Posprzataj rdzen i katalog ROM ze starej nazwy.
 #    UWAGA: vfat jest wrazliwy na wielkosc liter, wiec sprzataj oba warianty.
@@ -47,25 +50,24 @@ if [ -d "$SD_ROOT/cores/$OLD_APP" ]; then
     echo "Migracja $OLD_APP -> $APP ..."
     rm -rf "$SD_ROOT/cores/$OLD_APP"
 fi
-rm -fv "$SD_ROOT/cores/$OLD_APP" \
-       "$SD_ROOT/cores/$OLD_APP.sf2k" \
-       "$SD_ROOT/cores/$OLD_APP.gb3k" \
-       "$SD_ROOT/cores/$OLD_APP/core_87000000" \
-       "$SD_ROOT/system/Deimos/cores/$OLD_APP.sf2k" \
-       "$SD_ROOT/system/Deimos/cores/$OLD_APP.gb3k" 2>/dev/null || true
-rm -rf  "$SD_ROOT/cores/$LOW_APP" \
-        "$SD_ROOT/cores/$LOW_APP.sf2k" \
-        "$SD_ROOT/cores/$LOW_APP.gb3k" \
-        "$SD_ROOT/system/Deimos/cores/$LOW_APP.sf2k" \
-        "$SD_ROOT/system/Deimos/cores/$LOW_APP.gb3k" 2>/dev/null || true
+rm -fv "$SD_ROOT/system/Deimos/cores/$OLD_APP.sf2k" \
+       "$SD_ROOT/system/Deimos/cores/$OLD_APP.gb3k" \
+       "$SD_ROOT/system/Deimos/cores/$LOW_APP.sf2k" \
+       "$SD_ROOT/system/Deimos/cores/$LOW_APP.gb3k" 2>/dev/null || true
 
 # 3. Katalog ROM i stuby uruchomieniowe (FrogUI + Deimos + menu GBA)
 ROMS_DIR="$SD_ROOT/ROMS/$APP"
 
-# Przenies stara zawartosc, jesli juz istnieje, zamiast kopiowac od nowa
+# Przenies stara zawartosc, jesli juz istnieje, zamiast kopiowac od nowa.
+# Na vfat zmiana samej wielkosci liter wymaga dwoch krokow.
 if [ -d "$SD_ROOT/ROMS/$OLD_APP" ] && [ ! -d "$ROMS_DIR/Songs" ]; then
     echo "Przenoszenie $SD_ROOT/ROMS/$OLD_APP -> $ROMS_DIR"
     mv "$SD_ROOT/ROMS/$OLD_APP" "$ROMS_DIR"
+fi
+if [ -d "$SD_ROOT/ROMS/$OLD_APP2" ]; then
+    echo "Przenoszenie $SD_ROOT/ROMS/$OLD_APP2 -> $ROMS_DIR"
+    mv "$SD_ROOT/ROMS/$OLD_APP2" "$SD_ROOT/ROMS/.froggysm_tmp.$$"
+    mv "$SD_ROOT/ROMS/.froggysm_tmp.$$" "$ROMS_DIR"
 fi
 
 mkdir -p "$ROMS_DIR/.res"
@@ -93,7 +95,7 @@ rm -fv "$SD_ROOT/ROMS/$BIN.gba" \
        "$SD_ROOT/ROMS/gba/$BIN.gba" \
        "$SD_ROOT/ROMS/gba/$LOW_APP.gba" \
        "$ROMS_DIR/$BIN.gba" 2>/dev/null || true
-rm -rf "$SD_ROOT/ROMS/$OLD_APP" "$SD_ROOT/ROMS/$LOW_APP" 2>/dev/null || true
+rm -rf "$SD_ROOT/ROMS/$OLD_APP" "$SD_ROOT/ROMS/$LOW_APP" "$SD_ROOT/ROMS/$OLD_APP2" 2>/dev/null || true
 
 # 4. Kopiuj okladke
 if [ -f "/tmp/opencode/FroggySM.rgb565" ]; then

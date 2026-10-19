@@ -41,57 +41,66 @@ on both consoles.
 cp froggysm.sf2k /media/<CARD>/system/Deimos/cores/froggysm.sf2k
 ```
 
-### 2. Create the folders
+### 2. Create the ROM folder and the game file
+
+The launcher derives the **core name from the folder name** and then looks for
+`system/Deimos/cores/<folder>.sf2k`. The folder and the core file must therefore
+be spelled **identically, including letter case** — a difference in case alone
+is enough for the lookup to miss and the launch to fail silently.
 
 ```bash
-mkdir -p /media/<CARD>/ROMS/FroggySM/Songs
+mkdir -p /media/<CARD>/ROMS/froggysm/Songs
+printf '' > /media/<CARD>/ROMS/froggysm/froggysm
 ```
 
-### 3. Create the ROM entry
+That gives you:
 
-This step is the one people get wrong. The `.gba` file is a **stub**: the
-firmware reads its *contents* and parses them as
+```
+system/Deimos/cores/froggysm.sf2k   ← core   (loaded)
+ROMS/froggysm/froggysm              ← game   (passed to the core)
+ROMS/froggysm/Songs/                ← songs
+```
+
+### 3. Optional: a menu stub
+
+The stock file browser wants a `.gba` stub. The firmware reads its *contents* and
+parses them as
 
 ```
 <core id>;<ROM folder>;<ROM file>.<extension>
 ```
 
-The third field **must contain a dot.** The firmware strips the extension, so a
-bare filename makes the whole parse fail — the console then treats the stub as a
-plain GBA ROM, shows a `STOCK` screen and the core never loads.
+The third field **must contain a dot** — the extension is stripped, and a bare
+filename makes the parse fail, leaving you with a `STOCK` screen.
 
 ```bash
-printf 'froggysm;FroggySM;froggysm.gba' > '/media/<CARD>/ROMS/froggysm;FroggySM.gba'
-printf 'froggysm;FroggySM;froggysm.gba' > /media/<CARD>/ROMS/FroggySM/froggysm
+printf 'froggysm;froggysm;froggysm.gba' > '/media/<CARD>/ROMS/froggysm;FroggySM.gba'
 sync
 ```
 
-That resolves to:
-
-```
-core → /mnt/sda1/system/Deimos/cores/froggysm.sf2k
-rom  → /mnt/sda1/ROMS/FroggySM/froggysm
-```
-
-Compare with a core that works: `nfs2se;nfs2se;Need For Speed II SE.gba`.
-
-The stub file may be named anything ending in `.gba` — the menu label comes from
-the filename — but its contents must have the three fields above.
+Under the FrogUI menu you can skip this: it builds the same parameters from the
+folder and file names in steps 1 and 2.
 
 ### 4. Launch
 
 Boot the console, open the file browser and start **FroggySM**.
 
-If you get a `STOCK` screen instead of the game, step 3 is wrong. Check the stub
-with `cat '/media/<CARD>/ROMS/froggysm;FroggySM.gba'` — it must print
-`froggysm;FroggySM;froggysm.gba`.
+Two symptoms of a misconfigured install:
+
+- **`STOCK` screen** — the stub in step 3 was rejected. Check it with
+  `cat '/media/<CARD>/ROMS/froggysm;FroggySM.gba'`; it must print
+  `froggysm;froggysm;froggysm.gba`.
+- **Nothing happens at all** — the core lookup missed. Verify that the folder
+  and the core file are spelled identically:
+  `ls /media/<CARD>/ROMS/ | grep froggy` and
+  `ls /media/<CARD>/system/Deimos/cores/ | grep froggy`.
 
 ## Adding songs
 
 Standard StepMania layout — one folder per album, one per song:
 
 ```
-/ROMS/FroggySM/Songs/
+/ROMS/froggysm/Songs/
 └── <artist or pack>/
     └── <song>/
         ├── song.sm        # chart (required)
@@ -115,7 +124,7 @@ costs frame time**. A 320 kbps file will stutter; a 128 kbps file will not.
 Re-encode your library once:
 
 ```bash
-find /ROMS/FroggySM/Songs -iname '*.mp3' -print0 |
+find /ROMS/froggysm/Songs -iname '*.mp3' -print0 |
 while IFS= read -r -d '' f; do
     ffmpeg -y -i "$f" -vn -ar 44100 -ac 2 -b:a 128k -c:a libmp3lame "$f.tmp.mp3" &&
     mv "$f.tmp.mp3" "$f"

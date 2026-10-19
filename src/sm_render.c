@@ -479,9 +479,9 @@ static void draw_select(uint16_t *fb)
         sm_render_rect(fb, 16, 40, 288, 110, th->panel_bg);
         sm_render_rect_outline(fb, 16, 40, 288, 110, th->header_accent);
         sm_render_text(fb, 28, 54, "NO SONGS FOUND", COLOR_RED, 1);
-        sm_render_text(fb, 28, 72, "COPY THE FroggySM SONGS", COLOR_AMBER, 1);
+        sm_render_text(fb, 28, 72, "COPY THE FROGGYSM SONGS", COLOR_AMBER, 1);
         sm_render_text(fb, 28, 84, "FOLDER TO THE SD CARD:", COLOR_GREY, 1);
-        sm_render_text(fb, 28, 96, "/ROMS/FroggySM/Songs", COLOR_WHITE, 1);
+        sm_render_text(fb, 28, 96, "/ROMS/froggysm/Songs", COLOR_WHITE, 1);
         sm_render_text(fb, 28, 114, "START = RESCAN", COLOR_CYAN, 1);
 
         sm_render_rect(fb, 6, 214, 308, 22, th->panel_bg);
