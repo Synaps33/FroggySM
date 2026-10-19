@@ -5,8 +5,19 @@
 #include "sm_library.h"
 #include "sm_render.h"
 #include "sm_audio.h"
+#include "sm_diag.h"
 #include <string.h>
 #include <stdlib.h>
+/* xlog() lives in the multicore frontend and is only available on device. */
+#ifdef SM_DEVICE
+#include "debug.h"
+#else
+#include <stdio.h>
+static void xlog(const char *fmt, ...)
+{
+    (void)fmt;
+}
+#endif
 
 /* ---------------------------------------------------------------------------
  * libretro front end for the GB300 / SF2000 core.
@@ -78,18 +89,26 @@ static const char *songs_root_override(void)
 static void scan_songs(void)
 {
     const char *root = songs_root_override();
+    int n;
     if (root) {
-        sm_library_scan(root);
+        xlog("[froggysm] scan override root=%s", root);
+        n = sm_library_scan(root);
+        xlog("[froggysm] scan done root=%s songs=%d", root, n);
         return;
     }
-    sm_library_scan(NULL);
+    n = sm_library_scan(NULL);
+    xlog("[froggysm] scan done (auto roots) songs=%d groups=%d", n, g_group_count);
 }
 
 void retro_init(void)
 {
+    sm_diag("==== boot ====");
     sm_render_init();
+    sm_diag("init: render ok");
     sm_audio_init();
+    sm_diag("init: audio ok");
     sm_game_init();
+    sm_diag("init: game ok");
     s_started = 0;
 }
 
@@ -106,10 +125,14 @@ bool retro_load_game(const struct retro_game_info *info)
     if (s_environ_cb)
         s_environ_cb(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT, &fmt);
 
+    sm_diag("load_game: start");
     scan_songs();
+    sm_diag("load_game: scan done songs=%d groups=%d", g_library_count, g_group_count);
 
     sm_game_init();
+    sm_diag("load_game: game_init done");
     s_started = 1;
+    sm_diag("load_game: done");
     return true;
 }
 
@@ -181,9 +204,32 @@ void retro_run(void)
     for (int i = 0; i < SM_NUM_LANES; i++)
         g_game.btn_prev[i] = prev[i];
 
+    /* Screen transitions are the interesting part of boot: if the loading
+     * screen never hands over, this is the line that says why. */
+    {
+        static int last_screen = -1;
+        if (g_game.screen != last_screen) {
+            xlog("[froggysm] screen %d -> %d (boot_frames=%d songs=%d)",
+                 last_screen, g_game.screen, g_game.boot_frames, g_library_count);
+            last_screen = g_game.screen;
+        }
+    }
+
+    int diag_frame = (g_game.frame_count <= 2) ||
+                     (g_game.frame_count >= 103 && g_game.frame_count <= 112);
+    if (diag_frame)
+        sm_diag("run: pre frame=%d screen=%d boot=%d", g_game.frame_count,
+                g_game.screen, g_game.boot_frames);
+
     sm_game_update();
 
+    if (diag_frame)
+        sm_diag("run: update done frame=%d screen=%d", g_game.frame_count,
+                g_game.screen);
+
     sm_render_frame(s_framebuffer);
+    if (diag_frame)
+        sm_diag("run: render done frame=%d", g_game.frame_count);
     if (s_video_cb)
         s_video_cb(s_framebuffer, SM_SCREEN_WIDTH, SM_SCREEN_HEIGHT,
                    SM_SCREEN_WIDTH * sizeof(uint16_t));

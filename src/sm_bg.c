@@ -1,5 +1,6 @@
 #include "sm_bg.h"
 #include "sm_dirent.h"
+#include "sm_diag.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -49,7 +50,9 @@ static int load_image_file(const char *path)
     if (s_has_bg && strcmp(s_current_path, path) == 0) return 1;
 
     int w = 0, h = 0, comp = 0;
+    sm_diag("bg: load %s", path);
     unsigned char *data = stbi_load(path, &w, &h, &comp, 3);
+    sm_diag("bg: result %p %dx%d", (void *)data, w, h);
     if (!data || w <= 0 || h <= 0) return 0;
 
     /* Resample into 320x240 RGB565 */
@@ -211,7 +214,9 @@ int sm_banner_load_file(const char *path)
         return 1;
 
     int w = 0, h = 0, comp = 0;
+    sm_diag("banner: load %s", path);
     unsigned char *data = stbi_load(path, &w, &h, &comp, 3);
+    sm_diag("banner: result %p %dx%d", (void *)data, w, h);
     if (!data || w <= 0 || h <= 0) {
         s_has_banner = 0;
         s_current_banner_path[0] = 0;

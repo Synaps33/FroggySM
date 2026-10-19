@@ -2,6 +2,7 @@
 #include "sm_game.h"
 #include "sm_render.h"
 #include "sm_bg.h"
+#include "sm_diag.h"
 #include "sm_dirent.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -412,6 +413,8 @@ void sm_theme_apply(int idx)
     g_game.theme = idx;
 
     const sm_theme_t *t = &s_themes[idx];
+    sm_diag("theme: apply idx=%d screen=%d bg=%s", idx, g_game.screen,
+            t->bg_select[0] ? t->bg_select : "(none)");
     if (g_game.screen == SCREEN_SELECT) {
         if (t->bg_select[0]) {
             sm_bg_load_file(t->bg_select);

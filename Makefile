@@ -13,7 +13,8 @@ SOURCES_C := \
 	$(SRC_DIR)/sm_audio.c \
 	$(SRC_DIR)/sm_bg.c \
 	$(SRC_DIR)/sm_theme.c \
-	$(SRC_DIR)/sm_assets.c
+	$(SRC_DIR)/sm_assets.c \
+	$(SRC_DIR)/sm_diag.c
 
 OBJS := $(SOURCES_C:.c=.o)
 

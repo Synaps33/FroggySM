@@ -1,6 +1,7 @@
 #include "sm_library.h"
 #include "sm_song.h"
 #include "sm_dirent.h"
+#include "sm_diag.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -389,17 +390,21 @@ int sm_library_scan(const char *root)
 
     const char *r = root;
     if (r) {
+        sm_diag("scan: root %s", r);
         scan_dir(r, 0);
     } else {
         for (int i = 0; s_default_roots[i]; i++) {
             DIR *d = opendir(s_default_roots[i]);
+            sm_diag("scan: try %s %s", s_default_roots[i], d ? "ok" : "missing");
             if (!d) continue;
             closedir(d);
             scan_dir(s_default_roots[i], 0);
+            sm_diag("scan: after %s songs=%d", s_default_roots[i], g_library_count);
             if (g_library_count > 0) break;
         }
     }
     rebuild_groups();
+    sm_diag("scan: done songs=%d groups=%d", g_library_count, g_group_count);
     return g_library_count;
 }
 

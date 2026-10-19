@@ -4,6 +4,7 @@
 #include "sm_audio.h"
 #include "sm_bg.h"
 #include "sm_theme.h"
+#include "sm_diag.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -864,7 +865,9 @@ static void update_select(void)
     g_game.preview_timer += 1.0f / 60.0f;
     if (g_game.preview_timer >= 0.4f && g_game.preview_song_idx != g_game.song_idx) {
         if (lib && lib->song.has_music && lib->music_path[0]) {
-            sm_audio_open_music(lib->music_path);
+            sm_diag("preview: open %s", lib->music_path);
+            int rc = sm_audio_open_music(lib->music_path);
+            sm_diag("preview: open rc=%d", rc);
             g_game.preview_song_idx = g_game.song_idx;
         }
     }
@@ -899,13 +902,20 @@ void sm_game_update(void)
     case SCREEN_BOOT:
         g_game.boot_frames++;
         if (g_game.boot_frames > 105) {
+            sm_diag("boot: transition start");
             g_game.screen = SCREEN_SELECT;
             sm_theme_apply(g_game.theme);
+            sm_diag("boot: theme applied");
             sm_lib_song_t *lib = sm_library_get(g_game.song_idx);
-            if (lib && lib->banner_path[0])
-                sm_banner_load_file(lib->banner_path);
-            else
+            sm_diag("boot: lib=%d banner=%s", g_game.song_idx,
+                    (lib && lib->banner_path[0]) ? lib->banner_path : "(none)");
+            if (lib && lib->banner_path[0]) {
+                int rc = sm_banner_load_file(lib->banner_path);
+                sm_diag("boot: banner rc=%d", rc);
+            } else {
                 sm_banner_clear();
+            }
+            sm_diag("boot: transition done");
         }
         for (int i = 0; i < SM_NUM_LANES; i++) g_game.btn_prev[i] = sm_btn[i];
         break;
